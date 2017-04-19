@@ -6,13 +6,17 @@
 //Vertex Shader
 static char* vsSource = "#version 120\n\
 attribute vec4 vertex;\n\
+attribute vec4 aColor;\n\
+varying vec4 vColor;\n\
 void main(void) {\n\
 		gl_Position = vertex;\n\
+		vColor = aColor;\n\
 }";
 //Fragment Shader
 static char* fsSource = "#version 120\n\
+varying vec4 vColor;\n\
 void main(void) {\n\
-			gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n\
+			gl_FragColor = vColor;\n\
 	}";
 
 GLfloat plane0[] = { // initial position
@@ -27,23 +31,34 @@ GLfloat plane1[] = { // current position
 };
 GLfloat stone0[] = { // initial obstacle
 	-0.5F, +0.9F, 0.0F, 1.0F,
-	-0.5F, +0.8F, 0.0F, 1.0F,
-	-0.4F, +0.9F, 0.0F, 1.0F,
+	-0.7F, +0.9F, 0.0F, 1.0F,
+	-0.6F, +0.8F, 0.0F, 1.0F,
 };
 GLfloat stone1[] = { // dropping obstacle
 	-0.5F, +0.9F, 0.0F, 1.0F,
-	-0.5F, +0.8F, 0.0F, 1.0F,
-	-0.4F, +0.9F, 0.0F, 1.0F,
+	-0.7F, +0.9F, 0.0F, 1.0F,
+	-0.6F, +0.8F, 0.0F, 1.0F,
 };
 GLfloat bullet0[] = { // initial bullet
-	 0.0F, -0.4F, 0.0F, 1.0F,
-	+0.1F, -0.5F, 0.0F, 1.0F,
-	-0.1F, -0.5F, 0.0F, 1.0F,
+	 0.0F, -0.2F, 0.0F, 1.0F,
+	+0.05F, -0.5F, 0.0F, 1.0F,
+	-0.05F, -0.5F, 0.0F, 1.0F,
 };
 GLfloat bullet1[] = { // moving bullet
-	 0.0F, -0.4F, 0.0F, 1.0F,
-	+0.1F, -0.5F, 0.0F, 1.0F,
-	-0.1F, -0.5F, 0.0F, 1.0F,
+	 0.0F, -0.2F, 0.0F, 1.0F,
+	+0.05F, -0.5F, 0.0F, 1.0F,
+	-0.05F, -0.5F, 0.0F, 1.0F,
+};
+
+GLfloat planeColor[] = {
+	1.0, 0.0, 0.0, 1.0, // red
+	1.0, 0.0, 0.0, 1.0, // red
+	1.0, 0.0, 0.0, 1.0, // red
+};
+GLfloat bulletColor[] = {
+	0.0, 0.0, 1.0, 1.0, // blue
+	0.0, 0.0, 1.0, 1.0, // blue
+	0.0, 0.0, 1.0, 1.0, // blue
 };
 
 GLuint vs = 0;
@@ -126,6 +141,7 @@ void myinit(void) {
 
 void mydisplay(void) {
 	GLuint loc;
+	GLuint locColor;
 	// clear in black color
 	glClearColor(0.3, 0.3, 0.3, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -134,6 +150,10 @@ void mydisplay(void) {
 	glEnableVertexAttribArray(loc);
 	// draw the plane
 	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, plane1);
+	// provide the color attributes
+	locColor = glGetAttribLocation(prog, "aColor");
+	glEnableVertexAttribArray(locColor);
+	glVertexAttribPointer(locColor, 4, GL_FLOAT, GL_FALSE, 0, planeColor);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 	// draw the stone
 	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, stone1);
@@ -141,6 +161,11 @@ void mydisplay(void) {
 	// draw the bullet
 	if (shoot) {
 		glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, bullet1);
+		// provide the color attributes
+		locColor = glGetAttribLocation(prog, "aColor");
+		glEnableVertexAttribArray(locColor);
+		glVertexAttribPointer(locColor, 4, GL_FLOAT, GL_FALSE, 0, bulletColor);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	// flush all
