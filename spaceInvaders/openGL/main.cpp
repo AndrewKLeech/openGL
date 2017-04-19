@@ -6,7 +6,6 @@
 //Vertex Shader
 static char* vsSource = "#version 120\n\
 attribute vec4 vertex;\n\
-uniform vec4 uMove;\n\
 void main(void) {\n\
 		gl_Position = vertex;\n\
 }";
