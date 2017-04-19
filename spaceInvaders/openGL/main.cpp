@@ -6,6 +6,7 @@
 //Vertex Shader
 static char* vsSource = "#version 120\n\
 attribute vec4 vertex;\n\
+uniform vec4 uMove;\n\
 void main(void) {\n\
 		gl_Position = vertex;\n\
 }";
@@ -29,13 +30,21 @@ GLfloat stone0[] = { // initial obstacle
 	-0.5F, +0.9F, 0.0F, 1.0F,
 	-0.5F, +0.8F, 0.0F, 1.0F,
 	-0.4F, +0.9F, 0.0F, 1.0F,
-	//TODO
 };
 GLfloat stone1[] = { // dropping obstacle
 	-0.5F, +0.9F, 0.0F, 1.0F,
 	-0.5F, +0.8F, 0.0F, 1.0F,
 	-0.4F, +0.9F, 0.0F, 1.0F,
-	//TODO
+};
+GLfloat bullet0[] = { // initial bullet
+	 0.0F, -0.4F, 0.0F, 1.0F,
+	+0.1F, -0.5F, 0.0F, 1.0F,
+	-0.1F, -0.5F, 0.0F, 1.0F,
+};
+GLfloat bullet1[] = { // moving bullet
+	 0.0F, -0.4F, 0.0F, 1.0F,
+	+0.1F, -0.5F, 0.0F, 1.0F,
+	-0.1F, -0.5F, 0.0F, 1.0F,
 };
 
 GLuint vs = 0;
@@ -43,7 +52,7 @@ GLuint fs = 0;
 GLuint prog = 0;
 const float planeStep = 0.04F; // may be tuned for your PC
 const float stoneStep = 0.001F;
-
+bool shoot = false;
 void myidle(void) {
 	// moving stone ! : you can add AI logic here!
 	stone1[1] -= stoneStep; // vertex#0.y
@@ -51,6 +60,15 @@ void myidle(void) {
 	stone1[9] -= stoneStep; // vertex#2.y
 	if (stone1[9] < -1.0F) {
 		memcpy(stone1, stone0, sizeof(stone0));
+	}
+	if (shoot) {
+		bullet1[1] += stoneStep; // vertex#0.y
+		bullet1[5] += stoneStep; // vertex#1.y
+		bullet1[9] += stoneStep; // vertex#2.y
+		if (bullet1[9] > 1.0F) {
+			shoot = false;
+			memcpy(bullet1, bullet0, sizeof(stone0));
+		}
 	}
 	// redisplay
 	glutPostRedisplay();
@@ -68,6 +86,9 @@ void mykeyboard(unsigned char key, int x, int y) {
 		plane1[0] -= planeStep;
 		plane1[4] -= planeStep;
 		plane1[8] -= planeStep;
+		bullet0[0] -= planeStep;
+		bullet0[4] -= planeStep;
+		bullet0[8] -= planeStep;
 		glutPostRedisplay();
 		break;
 	case 'd': // right move
@@ -75,6 +96,13 @@ void mykeyboard(unsigned char key, int x, int y) {
 		plane1[0] += planeStep;
 		plane1[4] += planeStep;
 		plane1[8] += planeStep;
+		bullet0[0] += planeStep;
+		bullet0[4] += planeStep;
+		bullet0[8] += planeStep;
+		glutPostRedisplay();
+		break;
+	case 32:
+		shoot = true;
 		glutPostRedisplay();
 		break;
 	}
@@ -111,6 +139,11 @@ void mydisplay(void) {
 	// draw the stone
 	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, stone1);
 	glDrawArrays(GL_TRIANGLES, 0, 3);
+	// draw the bullet
+	if (shoot) {
+		glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, bullet1);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+	}
 	// flush all
 	glFlush();
 	glutSwapBuffers();
