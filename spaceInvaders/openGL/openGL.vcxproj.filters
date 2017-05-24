@@ -19,4 +19,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="..\..\..\..\..\box.obj">
+      <Filter>Source Files</Filter>
+    </Resource>
+  </ItemGroup>
 </Project>
