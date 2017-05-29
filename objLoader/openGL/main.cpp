@@ -7,6 +7,7 @@
 #include<fstream>
 #include <string>
 #include <sstream>
+#include <vector>
 #pragma comment(lib, "glew32.lib")
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -40,18 +41,9 @@ GLuint vs = 0;
 GLuint fs = 0;
 GLuint prog = 0;
 
-GLfloat vertices[] = {
-	-0.5, -0.5, -0.5, 1.0, // 0
-	-0.5, -0.5, +0.5, 1.0, // 1
-	-0.5, +0.5, -0.5, 1.0, // 2
-	-0.5, +0.5, +0.5, 1.0, // 3
-	+0.5, -0.5, -0.5, 1.0, // 4
-	+0.5, -0.5, +0.5, 1.0, // 5
-	+0.5, +0.5, -0.5, 1.0, // 6
-	+0.5, +0.5, +0.5, 1.0, // 7
-};
+vector<GLfloat> vertices = {};
 
-GLfloat colors[] = {
+vector<GLfloat> colors = {
 	0.5, 0.5, 0.5, 1.0, // black
 	0.5, 0.5, 1.0, 1.0, // blue
 	0.5, 1.0, 0.5, 1.0, // green
@@ -62,31 +54,7 @@ GLfloat colors[] = {
 	1.0, 1.0, 1.0, 1.0, // white
 };
 
-string indicesStr[] = {
-	"0.5", "0.5", "0.5", "1.0", // black
-	"0.5", "0.5", "0.5", "1.0", // black
-	"0.5", "0.5", "0.5", "1.0", // black
-	"0.5", "0.5", "0.5", "1.0", // black
-	"0.5", "0.5", "0.5", "1.0", // black
-	"0.5", "0.5", "0.5", "1.0", // black
-	"0.5", "0.5", "0.5", "1.0", // black
-	"0.5", "0.5", "0.5", "1.0", // black
-};
-
-GLushort indices[] = { // 36 points, 12 triangles
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-	0, 0, 0,
-};
+vector<GLushort> indices = {};
 
 GLuint vbo[1];
 
@@ -214,6 +182,7 @@ void myinit(void) {
 	printf("vs compile status = %s\n", (status == GL_TRUE) ? "true" : "false");
 	glGetShaderInfoLog(vs, sizeof(buf), NULL, buf);
 	printf("vs log = [%s]\n", buf);
+
 	// fs: fragment shader
 	fs = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fs, 1, &fsSource, NULL);
@@ -222,6 +191,7 @@ void myinit(void) {
 	printf("fs compile status = %s\n", (status == GL_TRUE) ? "true" : "false");
 	glGetShaderInfoLog(fs, sizeof(buf), NULL, buf);
 	printf("fs log = [%s]\n", buf);
+
 	// prog: program
 	prog = glCreateProgram();
 	glAttachShader(prog, vs);
@@ -237,12 +207,13 @@ void myinit(void) {
 	glGetProgramInfoLog(prog, sizeof(buf), NULL, buf);
 	printf("validate log = [%s]\n", buf);
 	glUseProgram(prog); // execute it !
+
 						// VBO setting
 	glGenBuffers(1, vbo);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, 2 * 8 * 4 * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, 8 * 4 * sizeof(GLfloat), vertices);
-	glBufferSubData(GL_ARRAY_BUFFER, 8 * 4 * sizeof(GLfloat), 8 * 4 * sizeof(GLfloat), colors);
+	glBufferData(GL_ARRAY_BUFFER, colors.size() + vertices.size() * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(GLfloat), &vertices.front());
+	glBufferSubData(GL_ARRAY_BUFFER, colors.size() * sizeof(GLfloat), colors.size() * sizeof(GLfloat), &colors.front());
 	// provide the vertex attributes
 	loc = glGetAttribLocation(prog, "aPosition");
 	glEnableVertexAttribArray(loc);
@@ -250,7 +221,7 @@ void myinit(void) {
 	// provide the color attributes
 	loc = glGetAttribLocation(prog, "aColor");
 	glEnableVertexAttribArray(loc);
-	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(8 * 4 * sizeof(GLfloat)));
+	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(colors.size() * sizeof(GLfloat)));
 	// depth buffer enabled
 	glEnable(GL_DEPTH_TEST);
 }
@@ -279,13 +250,13 @@ void mydisplay(void) {
 	loc = glGetUniformLocation(prog, "uRot");
 	glUniformMatrix4fv(loc, 1, GL_FALSE, matRot);
 	// draw a triangle
-	glDrawElements(GL_TRIANGLES, 12 * 3, GL_UNSIGNED_SHORT, indices);
+	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_SHORT, &indices.front());
 	// flush all
 	glFlush();
 	glutSwapBuffers();
 }
 
-int main(int argc, char* argv[]) {
+void readObjFile() {
 	std::ifstream File("box.obj");
 	string Line;
 	string Name;
@@ -311,11 +282,16 @@ int main(int argc, char* argv[]) {
 		if (Name == "v") {
 			sscanf(Line.c_str(), "%*s %f %f %f", &tempx, &tempy, &tempz);
 			//devide by 2 for now so that object fits in screen
-			vertices[n] = tempx/2;
+			/*vertices[n] = tempx/2;
 			vertices[n + 1] = tempy/2;
 			vertices[n + 2] = tempz/2;
+			vertices[n + 3] = 1.0;*/
+			vertices.push_back(tempx / 2);
+			vertices.push_back(tempy / 2);
+			vertices.push_back(tempz / 2);
+			vertices.push_back(1.0);
 			//go to start of next vertex in array
-			n = n + 4;
+			//n = n + 4;
 		}
 		if (Name == "f") {
 			sscanf(Line.c_str(), "%*s %s %s %s", stempx, stempy, stempz);
@@ -324,18 +300,26 @@ int main(int argc, char* argv[]) {
 			itempy = stempy[0] - '0';
 			itempz = stempz[0] - '0';
 			//minus one to start indeces at 0 insted of 1
-			indices[o] = itempx - 1;
+			/*indices[o] = itempx - 1;
 			indices[o + 1] = itempy - 1;
-			indices[o + 2] = itempz - 1;
+			indices[o + 2] = itempz - 1;*/
+			indices.push_back(itempx - 1);
+			indices.push_back(itempy - 1);
+			indices.push_back(itempz - 1);
 			//go to start of next indice line
-			o = o + 3;
+			//o = o + 3;
 		}
 	};
+}
+
+int main(int argc, char* argv[]) {
+	
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(WINDSIZEX, WINDSIZEY);
 	glutInitWindowPosition(0, 0);
 	glutCreateWindow("simple");
+	readObjFile();
 	glutDisplayFunc(mydisplay);
 	glutKeyboardFunc(mykeyboard);
 	glutMouseFunc(mymouse);
