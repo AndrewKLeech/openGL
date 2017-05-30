@@ -44,7 +44,16 @@ GLuint fs = 0;
 GLuint prog = 0;
 
 vector<GLfloat> vertices = {};
-vector<GLfloat> colors = {};
+vector<GLfloat> colors = {
+0.0, 0.0, 0.0, 1.0,
+0.5, 0.5, 1.0, 1.0, // blue
+0.5, 1.0, 0.5, 1.0, // green
+0.5, 1.0, 1.0, 1.0, // cyan
+1.0, 0.5, 0.5, 1.0, // red
+1.0, 0.5, 1.0, 1.0, // magenta
+1.0, 1.0, 0.5, 1.0, // yellow
+1.0, 1.0, 1.0, 1.0, // white
+};
 vector<GLushort> indices = {};
 
 GLuint vbo[1];
@@ -243,7 +252,7 @@ void myinit(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
 	glBufferData(GL_ARRAY_BUFFER, colors.size() + vertices.size() * sizeof(GLfloat), NULL, GL_STATIC_DRAW);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(GLfloat), &vertices.front());
-	glBufferSubData(GL_ARRAY_BUFFER, colors.size() * sizeof(GLfloat), colors.size() * sizeof(GLfloat), &colors.front());
+	glBufferSubData(GL_ARRAY_BUFFER, colors.size() * sizeof(GLfloat), vertices.size() * sizeof(GLfloat), &colors.front());
 	// provide the vertex attributes
 	loc = glGetAttribLocation(prog, "aPosition");
 	glEnableVertexAttribArray(loc);
@@ -251,7 +260,7 @@ void myinit(void) {
 	// provide the color attributes
 	loc = glGetAttribLocation(prog, "aColor");
 	glEnableVertexAttribArray(loc);
-	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(colors.size() * sizeof(GLfloat)));
+	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, (GLvoid*)(8 * 4 * sizeof(GLfloat)));
 	// depth buffer enabled
 	glEnable(GL_DEPTH_TEST);
 }
@@ -268,7 +277,7 @@ void myidle(void) {
 float upDown = 0;
 void mydisplay(void) {
 	GLuint loc;
-	// clear 
+	//Make object move up and down
 	if (up) {
 		for (int i = 0; i <= sizeof(matModel) - 1; i += 4) {
 			matModel[i + 1] += 0.0001f;
@@ -287,8 +296,9 @@ void mydisplay(void) {
 	else if (height <= -1) {
 		up = true;
 	}//End if
+
 	View = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
-	Projection = glm::perspective(100.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+	Projection = glm::perspective(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
 	Model = glm::mat4(1.0f);
 	glClearColor(0.3F, 0.3F, 0.3F, 1.0F); // gray
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -333,10 +343,9 @@ void readObjFile() {
 
 		if (Name == "v") {
 			sscanf(Line.c_str(), "%*s %f %f %f", &tempx, &tempy, &tempz);
-			//devide by 2 for now so that object fits in screen
-			vertices.push_back(tempx / 50);
-			vertices.push_back(tempy / 50);
-			vertices.push_back(tempz / 50);
+			vertices.push_back(tempx / 5);
+			vertices.push_back(tempy / 5);
+			vertices.push_back(tempz / 5);
 			vertices.push_back(1.0);
 			colors.push_back(static_cast <GLfloat> (rand()) / static_cast <GLfloat> (RAND_MAX));
 			colors.push_back(static_cast <GLfloat> (rand()) / static_cast <GLfloat> (RAND_MAX));
